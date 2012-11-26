@@ -23,18 +23,35 @@
         #help-box p {
             margin: 2px;
         }
-        #help-dir {
+        .bottom-div {
             position: fixed;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.5);
+            padding: 1px;
+        }
+        #help-dir {
             right: 5px;
             bottom: 5px;
-            z-index: 1000;
+        }
+        #github {
+            left: 5px;
+            bottom: 5px;
+        }
+        #github a {
+            text-decoration: none;
+            color: black;
         }
     </style>
 </head>
 <body>
     <script src="cgol.js"></script>
-    <div id="help-dir">
+    <div id="help-dir" class="bottom-div">
         Press ? for help.
+    </div>
+    <div id="github" class="bottom-div">
+        <a href="https://github.com/jiffyclub/game-of-life-js">
+            GitHub
+        </a>
     </div>
 </body>
 </html>
