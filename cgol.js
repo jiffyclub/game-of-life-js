@@ -1,17 +1,23 @@
-// make these multiples of CELL_SIZE
-var CELL_SIZE = 10;
-var CANVAS_WIDTH = window.innerWidth -
-    (window.innerWidth % CELL_SIZE) + CELL_SIZE;
-var CANVAS_HEIGHT = window.innerHeight -
-    (window.innerHeight % CELL_SIZE) + CELL_SIZE;
+var GLOBALS = {};
+
+// make these multiples of cell_size
+GLOBALS['cell_size'] = 10;
+GLOBALS['canvas_width'] = window.innerWidth -
+    (window.innerWidth % GLOBALS['cell_size']) + GLOBALS['cell_size'];
+GLOBALS['canvas_height'] = window.innerHeight -
+    (window.innerHeight % GLOBALS['cell_size']) + GLOBALS['cell_size'];
+
+// wait time between updates
+GLOBALS['interval'] = 200;
+GLOBALS['interval_id'] = null;
 
 
 // add canvas to the page
 function add_canvas() {
     var canvas = document.createElement('canvas');
     canvas.setAttribute('id', 'cgol-canvas');
-    canvas.setAttribute('width', CANVAS_WIDTH);
-    canvas.setAttribute('height', CANVAS_HEIGHT);
+    canvas.setAttribute('width', GLOBALS   ['canvas_width']);
+    canvas.setAttribute('height', GLOBALS['canvas_height']);
     document.body.appendChild(canvas);
 
     return canvas.getContext('2d');
@@ -22,8 +28,8 @@ function add_canvas() {
 function zeros() {
     var a, i, j, m, n, mat = [];
 
-    m = CANVAS_HEIGHT / CELL_SIZE;
-    n = CANVAS_WIDTH / CELL_SIZE;
+    m = GLOBALS['canvas_height'] / GLOBALS['cell_size'];
+    n = GLOBALS['canvas_width'] / GLOBALS['cell_size'];
 
     for (i = 0; i < m; i++) {
         a = [];
@@ -63,12 +69,13 @@ function draw_cells(context, cells) {
             if (cells[i][j] === 1) {
                 context.fillStyle = '#999';
             } else {
-                context.fillStyle = '#ddd';
+                context.fillStyle = '#DDD';
             }
 
-            from_top = i * CELL_SIZE;
-            from_left = j * CELL_SIZE;
-            context.fillRect(from_left, from_top, CELL_SIZE, CELL_SIZE);
+            from_top = i * GLOBALS['cell_size'];
+            from_left = j * GLOBALS['cell_size'];
+            context.fillRect(from_left, from_top,
+                             GLOBALS['cell_size'], GLOBALS['cell_size']);
         }
     }
 }
@@ -132,16 +139,84 @@ function update(cells) {
 }
 
 
-function run_sim(context, cells) {
+function init_sim() {
+    GLOBALS['cells'] = initialize_cells(zeros());
+}
+
+
+function run_sim() {
+    var cells = GLOBALS['cells'];
+    var context = GLOBALS['context'];
+
     update(cells);
     draw_cells(context, cells);
 }
 
 
-window.onload = function () {
-    var context, cells, interval_id;
+// remove the help box if it exists
+function clear_help() {
+    var div = document.getElementById('help-box');
+    if (div) {
+        document.body.removeChild(div);
+    }
+}
 
-    context = add_canvas();
-    cells = initialize_cells(zeros());
-    interval_id = window.setInterval(run_sim, 200, context, cells);
+
+// show a help describing the available key commands
+function show_help() {
+    var div;
+
+    clear_help();
+
+    div = document.createElement('div');
+    div.setAttribute('id', 'help-box');
+
+    div.innerHTML = '<p>Press &lt;space&gt; to pause/unpause.</p>';
+    div.innerHTML += '<p>Press &lt;n&gt; to step while paused.</p>';
+    div.innerHTML += '<p>Press &lt;r&gt; to reset the simulation.</p>';
+
+    document.body.appendChild(div);
+
+    window.setTimeout(clear_help, 5000);
+}
+
+
+function on_key_press(event) {
+    var key = String.fromCharCode(event.charCode);
+
+    // space for pause/unpause
+    if (key === ' ') {
+        if (GLOBALS['interval_id']) {
+            window.clearInterval(GLOBALS['interval_id']);
+            GLOBALS['interval_id'] = null;
+        } else {
+            GLOBALS['interval_id'] = window.setInterval(run_sim,
+                                                        GLOBALS['interval']);
+        }
+
+    // n for next step
+    } else if (key === 'n') {
+        run_sim();
+
+    // r for reset
+    } else if (key === 'r') {
+        window.clearInterval(GLOBALS['interval_id']);
+        init_sim();
+        GLOBALS['interval_id'] = window.setInterval(run_sim,
+                                                    GLOBALS['interval']);
+
+    // ? for help
+    } else if (key === '?') {
+        show_help();
+    }
+}
+
+
+window.onload = function () {
+    GLOBALS['context'] = add_canvas();
+
+    init_sim();
+    GLOBALS['interval_id'] = window.setInterval(run_sim, GLOBALS['interval']);
+
+    window.onkeypress = on_key_press;
 };
